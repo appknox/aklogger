@@ -1,4 +1,4 @@
-# varys
+# aklogger
 
 Keep track of all the events happening in your project: A generic logging package for python projects.
 
