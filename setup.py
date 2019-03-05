@@ -39,7 +39,8 @@ setup(
         ],
         'test': [
             'codecov==2.0.15',
-            'coverage==4.5.2'
+            'coverage==4.5.2',
+            'pytest-cov==2.6.1'
         ],
     },
     keywords='appknox aklogger',

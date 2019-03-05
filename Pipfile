@@ -9,6 +9,7 @@ twine = "==1.12.1"
 flake8 = "*"
 codecov = "*"
 coverage = "*"
+pytest-cov = "*"
 
 [packages]
 slacker = ">=0.7.3,<=0.9.65"
