@@ -1,0 +1,33 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: circleci/python:3.6-jessie-node
+    steps:
+      - checkout
+      - restore_cache:
+          key: v1-dep-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: Install deps
+          command: |
+            sudo pip install pipenv
+            pipenv install -d
+      - save_cache:
+          key: v1-dep-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          paths:
+            - ".venv"
+      - run:
+          name: Testing...
+          command: |
+            pipenv run flake8
+            pipenv run py.test --cov=aklogger
+      - run:
+          name: Coverage Reporting
+          command: |
+            pipenv run codecov -t $CODECOV_TOKEN
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test

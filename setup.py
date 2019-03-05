@@ -1,33 +1,47 @@
 import os
-import setuptools
 
-VERSION = "0.0.1"
+from setuptools import setup, find_packages
+
+__VERSION__ = '0.0.1'
+
 
 def readme(*paths):
     with open(os.path.join(*paths), 'r') as f:
         return f.read()
 
-
-def requirements(*paths):
-    with open(os.path.join(*paths), 'r') as f:
-        return list(line.strip() for line in f.readlines() if line.strip() != '')
-
-
-setuptools.setup(
+setup(
     name="aklogger",
-    version=VERSION,
-    author="Shrikrishna Singh",
-    author_email="shrikrishna@appknox.com",
+    version=__VERSION__,
+    author="appknox",
+    author_email="engineering@appknox.com",
     description="A generic logging package for python projects",
     long_description=readme('README.md'),
     url="https://github.com/appknox/aklogger",
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
+    license='MIT',
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     include_package_data=True,
     zip_safe=False,
-    install_requires=requirements('requirements.txt'),
+    install_requires=[
+        'slacker>=0.7.3,<=0.9.65',
+        'six==1.11.0'
+    ],
+    zip_safe=False,
+    extras_require={
+        'dev': [
+            'bumpversion==0.5.3',
+            'twine==1.12.1',
+            'flake8==3.7.7'
+        ],
+        'test': [
+            'codecov==2.0.15',
+            'coverage==4.5.2'
+        ],
+    },
+    keywords='appknox aklogger',
+    entry_points='',
 )
