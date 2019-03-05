@@ -1,2 +1,1 @@
-Django==2.1.7
-slacker-log-handler==1.7.1
+slacker
