@@ -1,4 +1,4 @@
 import logging
-from . import handlers
+from .handlers import * # noqa
 
 aklogger = logging.Logger

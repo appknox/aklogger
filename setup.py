@@ -9,6 +9,7 @@ def readme(*paths):
     with open(os.path.join(*paths), 'r') as f:
         return f.read()
 
+
 setup(
     name="aklogger",
     version=__VERSION__,
@@ -30,7 +31,6 @@ setup(
         'slacker>=0.7.3,<=0.9.65',
         'six==1.11.0'
     ],
-    zip_safe=False,
     extras_require={
         'dev': [
             'bumpversion==0.5.3',
