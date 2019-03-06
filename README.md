@@ -24,7 +24,7 @@ import aklogger
 token = SLACK_API_KEY
 channel = CHANNEL_NAME
 
-logger = aklogger.aklogger('test', level='DEBUG')
+logger = aklogger.aklogger.Logger('test', level='DEBUG')
 f_handler = aklogger.handlers.FileHandler('test.log')
 c_handler = aklogger.handlers.StreamHandler()
 s_handler = aklogger.handlers.SlackerLogHandler(token, channel)
