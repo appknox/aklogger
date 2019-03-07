@@ -15,6 +15,8 @@ from logging import (
 import six
 import slacker
 
+from . import utils
+
 ERROR_COLOR = 'danger'  # color name is built in to Slack API
 WARNING_COLOR = 'warning'  # color name is built in to Slack API
 INFO_COLOR = '#439FE0'
@@ -98,7 +100,7 @@ class SlackerLogHandler(logging.Handler):
 
     def emit(self, record):
         message = self.build_msg(record)
-        message_list = message.split('\n')
+        message_list = message.split(utils.MESSAGE_SEPERATOR, 1)
         if len(message_list) == 2:
             title = message_list[0]
             description = message_list[1]
@@ -108,7 +110,7 @@ class SlackerLogHandler(logging.Handler):
 
         if self.ping_users and record.levelno >= self.ping_level:
             for user in self.ping_users:
-                message = '<@%s> %s' % (user, description)
+                message = '<@{}> {}'.format(user, title)
 
         if self.stack_trace:
             trace = self.build_trace(record, fallback=title, text=description)

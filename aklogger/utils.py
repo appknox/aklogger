@@ -7,6 +7,8 @@ module_hdlr = logging.StreamHandler(sys.stdout)
 module_logger = logging.getLogger(__name__)
 module_logger.addHandler(module_hdlr)
 
+MESSAGE_SEPERATOR = '\n\n'
+
 
 class CustomEncoder(JSONEncoder):
     """A unicode aware JSON encoder that can handle iterators, dates, and times
@@ -47,8 +49,10 @@ def get_message(title=None, msg=None):
         return
     elif not title:
         message = msg
+        return message
     elif not msg:
         message = title
+        return message
     else:
-        message = '{}\n{}'.format(title, msg)
-    return message
+        message = '{}{}{}'.format(title, MESSAGE_SEPERATOR, msg)
+        return message

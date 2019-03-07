@@ -9,7 +9,6 @@ from builtins import * # noqa
 from .utils import CustomEncoder
 
 BASIC_FORMAT = '%(message)s'
-BOM_FORMAT = '\ufeff%(message)s'
 CONSOLE_FORMAT = '%(name)-12s: %(levelname)-8s %(message)s'
 FIXED_FORMAT = (
     '%(asctime)s.%(msecs)-3d %(name)-12s %(levelname)-8s %(message)s')
@@ -51,7 +50,6 @@ class StructuredFormatter(logging.Formatter):
 
 
 basic_formatter = logging.Formatter(BASIC_FORMAT)
-bom_formatter = logging.Formatter(BOM_FORMAT)
 console_formatter = logging.Formatter(CONSOLE_FORMAT)
 fixed_formatter = logging.Formatter(FIXED_FORMAT, datefmt=DATEFMT)
 csv_formatter = logging.Formatter(CSV_FORMAT, datefmt=DATEFMT)

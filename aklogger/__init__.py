@@ -17,31 +17,31 @@ class AKLogger(object):
     def set_level(self, level):
         return self.logger.setLevel(level)
 
-    def debug(self, title=None, msg=None):
+    def debug(self, title=None, msg=None, *args, **kwargs):
         message = utils.get_message(title, msg)
         if not message:
             return
         return self.logger.debug(message)
 
-    def info(self, title=None, msg=None):
+    def info(self, title=None, msg=None, *args, **kwargs):
         message = utils.get_message(title, msg)
         if not message:
             return
         return self.logger.info(message)
 
-    def warning(self, title=None, msg=None):
+    def warning(self, title=None, msg=None, *args, **kwargs):
         message = utils.get_message(title, msg)
         if not message:
             return
         return self.logger.warning(message)
 
-    def error(self, title=None, msg=None):
+    def error(self, title=None, msg=None, *args, **kwargs):
         message = utils.get_message(title, msg)
         if not message:
             return
         return self.logger.error(message)
 
-    def critical(self, title=None, msg=None):
+    def critical(self, title=None, msg=None, *args, **kwargs):
         message = utils.get_message(title, msg)
         if not message:
             return
@@ -51,7 +51,7 @@ class AKLogger(object):
         return self.logger.addHandler(hldr)
 
     def remove_handler(self, hldr):
-        return self.logger.removeHandler
+        return self.logger.removeHandler(hldr)
 
     def has_handlers(self):
-        return self.logger.hasHandlers
+        return self.logger.hasHandlers()
