@@ -1,5 +1,5 @@
 from unittest import TestCase
-from aklogger import aklogger
+from .. import aklogger
 import os
 
 

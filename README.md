@@ -24,16 +24,16 @@ import aklogger
 token = SLACK_API_KEY
 channel = CHANNEL_NAME
 
-logger = aklogger.aklogger.Logger('test', level='DEBUG')
+logger = aklogger.AKLogger('test', level='DEBUG')
 f_handler = aklogger.handlers.FileHandler('test.log')
 c_handler = aklogger.handlers.StreamHandler()
 s_handler = aklogger.handlers.SlackerLogHandler(token, channel)
 
-logger.addHandler(f_handler)
-logger.addHandler(c_handler)
-logger.addHandler(s_handler)
+logger.add_handler(f_handler)
+logger.add_handler(c_handler)
+logger.add_handler(s_handler)
 
-logger.error('aklogger is loggggggggggggggggggggging')
+logger.error('This is title', 'This is description')
 ```
 
 See [python logging docs](https://docs.python.org/3/library/logging.html) for more uses.
