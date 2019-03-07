@@ -1,7 +1,6 @@
 import logging
 
 import json
-import traceback
 from logging import (
     CRITICAL,
     ERROR,
@@ -89,34 +88,36 @@ class SlackerLogHandler(logging.Handler):
     def build_msg(self, record):
         return six.text_type(self.format(record))
 
-    def build_trace(self, record, fallback):
+    def build_trace(self, record, fallback, text):
         trace = {
             'fallback': fallback,
+            'text': text,
             'color': COLORS.get(self.level, INFO_COLOR)
         }
-
-        if record.exc_info:
-            trace['text'] = '\n'.join(
-                traceback.format_exception(*record.exc_info))
-
         return trace
 
     def emit(self, record):
         message = self.build_msg(record)
+        message_list = message.split('\n')
+        if len(message_list) == 2:
+            title = message_list[0]
+            description = message_list[1]
+        else:
+            title = message_list[0]
+            description = None
 
         if self.ping_users and record.levelno >= self.ping_level:
             for user in self.ping_users:
-                message = '<@%s> %s' % (user, message)
+                message = '<@%s> %s' % (user, description)
 
         if self.stack_trace:
-            trace = self.build_trace(record, fallback=message)
+            trace = self.build_trace(record, fallback=title, text=description)
             attachments = json.dumps([trace])
         else:
             attachments = None
-
         try:
             self.slacker.chat.post_message(
-                text=message,
+                text=title,
                 channel=self.channel,
                 username=self.username,
                 icon_url=self.icon_url,
@@ -130,6 +131,9 @@ class SlackerLogHandler(logging.Handler):
                 raise e
 
 
-FileHandler = logging.FileHandler
-StreamHandler = logging.StreamHandler
-SlackerLogHandler = SlackerLogHandler
+class FileHandler(logging.FileHandler):
+    pass
+
+
+class StreamHandler(logging.StreamHandler):
+    pass
