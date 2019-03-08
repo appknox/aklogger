@@ -1,18 +1,18 @@
 import logging
-from . import formatters, handlers, utils # noqa
+from . import formatters, handlers, utils
 
 
 class AKLogger(object):
 
     def __init__(self, name='root', level=None, **kwargs):
         self.logger = logging.Logger(name)
-        if level:
-            self.logger.setLevel(level)
-        handler = kwargs.get('handler')
-        formatter = kwargs.get('formatter', formatters.basic_formatter)
-        if handler:
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+        self.handler = kwargs.get('handler', handlers.StreamHandler())
+        self.formatter = kwargs.get('formatter', formatters.basic_formatter)
+        if not level:
+            self.level = 'DEBUG'
+        self.handler.setLevel(self.level)
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
 
     def set_level(self, level):
         return self.logger.setLevel(level)
