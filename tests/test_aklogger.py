@@ -17,7 +17,9 @@ class TestAKLogger(TestCase):
     def test_file_handler(self):
         title = 'title'
         desc = 'desc'
-        message = '{}{}{}'.format(title, '\n\n', desc)
+        message = '{}{}{}'.format(title,
+                                  aklogger.utils.MESSAGE_SEPERATOR,
+                                  desc)
         g_message = aklogger.utils.get_message(title, desc)
 
         # Test utils.get_message
@@ -134,7 +136,9 @@ class TestAKLogger(TestCase):
         with open('test.log', 'r+') as f:
             content1 = f.read()
             f.truncate(0)
-        self.assertEqual('\n\n\n\n\n\n\n\ndesc\n', content1)
+        self.assertEqual('\n\n\n\n\n\n{}desc\n'
+                         .format(aklogger.utils.MESSAGE_SEPERATOR),
+                         content1)
 
     def test_remove_handler(self):
         self.logger.remove_handler(self.handler)

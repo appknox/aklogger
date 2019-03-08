@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 from json import JSONEncoder
 
@@ -7,7 +8,9 @@ module_hdlr = logging.StreamHandler(sys.stdout)
 module_logger = logging.getLogger(__name__)
 module_logger.addHandler(module_hdlr)
 
-MESSAGE_SEPERATOR = '\n\n'
+MESSAGE_SEPERATOR = os.environ.get('MESSAGE_SEPERATOR',
+                                   '\n\n').encode(
+                                   'utf-8').decode('unicode_escape')
 
 
 class CustomEncoder(JSONEncoder):
