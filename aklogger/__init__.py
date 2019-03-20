@@ -64,7 +64,8 @@ class AKLogger(object):
         self.logger = get_logger(self.get_name())
         self.slkr = None
         self.slack_token = None
-        self.setLevel(WARNING)
+        self.slack_level = None
+        self.setLevel(NOTSET)
 
     def set_name(self, name):
         self.name = name
@@ -80,6 +81,9 @@ class AKLogger(object):
     def setLevel(self, level):
         self.level = logging._checkLevel(level)
         self.logger.setLevel(self.level)
+
+    def getLevel(self):
+        return self.level
 
     def enable_slack(self, token):
         self.slkr = Slacker(token)
@@ -103,22 +107,34 @@ class AKLogger(object):
 
     def debug(self, summary, details=None, channel='#error',
               *args, **kwargs):
-        self._log(DEBUG, summary, details, channel, *args, **kwargs)
+        self._log(DEBUG, self.get_name(), summary, details, channel, *args,
+                  **kwargs)
 
     def info(self, summary, details=None, channel='#error', *args,
              **kwargs):
-        self._log(INFO, summary, details, channel, *args, **kwargs)
+        self._log(INFO, self.get_name(), summary, details, channel, *args,
+                  **kwargs)
 
     def warning(self, summary, details=None, channel='#error', *args,
                 **kwargs):
-        self._log(WARNING, summary, details, channel, *args, **kwargs)
+        self._log(WARNING, self.get_name(), summary, details, channel, *args,
+                  **kwargs)
 
     def error(self, summary, details=None, channel='#error', *args,
               **kwargs):
-        self._log(ERROR, summary, details, channel, *args, **kwargs)
+        self._log(ERROR, self.get_name(), summary, details, channel, *args,
+                  **kwargs)
 
-    def _log(self, level, summary=None, details=None, channel='#error',
+    def _log(self, level, name, summary=None, details=None, channel='#error',
              *args, **kwargs):
+
+        if self.parent:
+            self.parent._log(level, name, summary, details, channel, *args,
+                             **kwargs)
+
+        if level < self.getLevel() or self.getLevel() == NOTSET:
+            return
+
         msg = summary
         if details:
             msg = tpl.format(
@@ -133,7 +149,7 @@ class AKLogger(object):
                     color='good'):
         if not self.slkr:
             return
-        if level < self.slack_level:
+        if level < self.get_slack_level():
             return
         try:
             self.slkr.chat.post_message(
@@ -159,4 +175,4 @@ logger = AKLogger('root')
 def getLogger(name=None):
     if name is None:
         return logger
-    return AKLogger(name)
+    return logger.getLogger(name)
