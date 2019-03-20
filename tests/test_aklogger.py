@@ -1,166 +1,71 @@
-from unittest import TestCase
-from .. import aklogger
 import os
+from aklogger import logger, tpl
 import slacker
 
+logger.set_name('mycroft')
+try:
+    logger.enable_slack('invalid_token')
+except slacker.Error:
+    pass
+logger.setLevel('DEBUG')
+logger.set_slack_level('WARNING')
+logger.log_to_file('file.log')
 
-class TestAKLogger(TestCase):
 
-    def setUp(self):
-        self.logger = aklogger.AKLogger('test')
-        self.handler = aklogger.handlers.FileHandler('test.log')
-        self.logger.add_handler(self.handler)
+def test_debug():
+    title = 'This is a debug message'
+    desc = 'This is the description of the debug message'
+    logger.debug(title, desc, '#error')
+    msg = tpl.format(
+        summary=title,
+        details=desc
+    )
+    with open('file.log', 'r+') as f:
+        content = f.read()
+        f.truncate(0)
+    assert len(msg) + 1 == len(content)
 
-    def tearDown(self):
-        os.remove('test.log')
 
-    def test_file_handler(self):
-        title = 'title'
-        desc = 'desc'
-        message = '{}{}{}'.format(title,
-                                  aklogger.utils.MESSAGE_SEPERATOR,
-                                  desc)
-        g_message = aklogger.utils.get_message(title, desc)
+def test_info():
+    title = 'This is a info message'
+    desc = 'This is the description of the info message'
+    logger.info(title, desc, '#error')
+    msg = tpl.format(
+        summary=title,
+        details=desc
+    )
+    with open('file.log', 'r+') as f:
+        content = f.read()
+        f.truncate(0)
+    assert len(msg) + 1 == len(content)
 
-        # Test utils.get_message
-        self.assertEqual(message, g_message)
 
-        self.logger.debug(title, desc)
+def test_warning():
+    title = 'This is a warning message'
+    desc = 'This is the description of the warning message'
+    logger.warning(title, desc, '#error')
+    msg = tpl.format(
+        summary=title,
+        details=desc
+    )
+    # extra_slack_log_for_invalid_token_or_channel
+    extra_log = 'Slack failed: invalid_auth'
+    msg2 = msg + '\n' + extra_log
+    with open('file.log', 'r+') as f:
+        content = f.read()
+        f.truncate(0)
+    assert len(msg2) + 1 == len(content)
 
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
 
-        # Test FileHandler
-        self.assertEqual(message, content1.strip())
-
-    def test_info(self):
-        # Test logger.info
-        title = 'Testing logger.info'
-        self.logger.info(title, None)
-        with open('test.log', 'r+') as f:
-            content2 = f.read()
-            f.truncate(0)
-        self.assertEqual(title, content2.strip())
-
-    def test_warning(self):
-        # Test logger.warning
-        msg1 = 'Testing logger.warning'
-        self.logger.warning(None, msg1)
-        with open('test.log', 'r+') as f:
-            content2 = f.read()
-            f.truncate(0)
-        self.assertEqual(msg1, content2.strip())
-
-    def test_error(self):
-        # Test logger.error
-        self.logger.error('', '')
-        with open('test.log', 'r+') as f:
-            content2 = f.read()
-            f.truncate(0)
-        self.assertEqual('', content2.strip())
-
-    def test_critical(self):
-        # Test logger.critical
-        msg = 'Testing critical'
-        self.logger.critical(msg)
-        with open('test.log', 'r+') as f:
-            content2 = f.read()
-            f.truncate(0)
-        self.assertEqual(msg, content2.strip())
-
-    def test_has_handlers(self):
-        # Test has_handlers
-        has_handler = self.logger.has_handlers()
-        self.assertTrue(has_handler)
-
-    def test_set_level(self):
-        self.logger.set_level('INFO')
-        msg = 'Testing set_level'
-        self.logger.debug(msg)
-
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        # Test FileHandler
-        self.assertEqual('', content1.strip())
-
-    def test_console_formatter(self):
-        formatter = aklogger.formatters.console_formatter
-        self.handler.setFormatter(formatter)
-        msg = 'testing console_formatter'
-        output_message = 'test        : ERROR    testing console_formatter'
-        self.logger.error(msg)
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        self.assertEqual(output_message, content1.strip())
-
-    def test_unicode_input(self):
-        # Test tab
-        msg1 = '\u0009'
-        self.logger.error(msg1)
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        self.assertEqual('\t\n', content1)
-
-        # Test dollar
-        msg2 = '\u0024'
-        self.logger.error(msg2)
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        self.assertEqual('$', content1.strip())
-
-    def test_no_input(self):
-        self.logger.error()
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        self.assertEqual('', content1)
-
-    def test_none_input(self):
-        title = None
-        desc = None
-        self.logger.error(title, desc)
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        self.assertEqual('', content1)
-
-    def test_multiple_new_lines_input(self):
-        title = '\n\n\n\n\n\n'
-        desc = 'desc'
-        self.logger.error(title, desc)
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        self.assertEqual('\n\n\n\n\n\n{}desc\n'
-                         .format(aklogger.utils.MESSAGE_SEPERATOR),
-                         content1)
-
-    def test_remove_handler(self):
-        self.logger.remove_handler(self.handler)
-        self.logger.error('title')
-        with open('test.log', 'r+') as f:
-            content1 = f.read()
-            f.truncate(0)
-        self.assertEqual('', content1)
-
-    def test_slack_handler(self):
-        self.logger.remove_handler(self.handler)
-
-        token = 'invalid token'
-        channel = 'invalid channel'
-
-        self.handler = aklogger.handlers.SlackerLogHandler(token, channel)
-        self.logger.add_handler(self.handler)
-
-        with self.assertRaises(slacker.Error):
-            self.logger.error('title', 'desc')
-
-        with self.assertRaises(slacker.Error):
-            aklogger.handlers.SlackerLogHandler(token,
-                                                channel,
-                                                ping_users=['sks'])
+def test_error():
+    title = 'This is a error message'
+    desc = None
+    logger.error(title, desc, '#error')
+    # extra_slack_log_for_invalid_token_or_channel
+    extra_log = 'Slack failed: invalid_auth'
+    msg2 = title + '\n' + extra_log
+    with open('file.log', 'r+') as f:
+        content = f.read()
+        f.truncate(0)
+    assert len(msg2) + 1 == len(content)
+    os.remove('file.log')
