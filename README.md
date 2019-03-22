@@ -19,21 +19,28 @@ $ pip install aklogger
 Following script will log messages to slack, file and console:
 
 ```python
-import aklogger
+from aklogger import logger
 
-token = SLACK_API_KEY
-channel = CHANNEL_NAME
+logger.set_name('mycroft')
+logger.setLevel('DEBUG')
 
-logger = aklogger.AKLogger('test', level='DEBUG')
-f_handler = aklogger.handlers.FileHandler('test.log')
-c_handler = aklogger.handlers.StreamHandler()
-s_handler = aklogger.handlers.SlackerLogHandler(token, channel)
+# This will log to console
+logger.info('Some Dummy log', 'Some dummy details of the dummy log')
 
-logger.add_handler(f_handler)
-logger.add_handler(c_handler)
-logger.add_handler(s_handler)
+# Enable File log
+logger.log_to_file('file.log')
 
-logger.error('This is title', 'This is description')
+# This will log to file and console
+logger.info('Some Dummy log', 'Some dummy details of the dummy log')
+
+# Enable Slack
+logger.enable_slack(SLACK_TOKEN)
+
+# Set slack level
+logger.set_slack_level('WARNING')
+
+# Now the logs will be log to slack
+logger.warning('Some Dummy log', 'Some dummy details of the dummy log')
 ```
 
 See [python logging docs](https://docs.python.org/3/library/logging.html) for more uses.
