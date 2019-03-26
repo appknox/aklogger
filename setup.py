@@ -2,7 +2,7 @@ import os
 
 from setuptools import setup, find_packages
 
-__VERSION__ = '0.1.0'
+__VERSION__ = '0.1.1'
 
 
 def readme(*paths):
