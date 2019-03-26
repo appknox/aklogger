@@ -41,6 +41,9 @@ logger.set_slack_level('WARNING')
 
 # Now the logs will be log to slack
 logger.warning('Some Dummy log', 'Some dummy details of the dummy log')
+
+# You can also do a force push to slack no matter what the slack level is set.
+logger.info('Dummy log', 'Details of the dummy log', force_push_slack=True)
 ```
 
 See [python logging docs](https://docs.python.org/3/library/logging.html) for more uses.
