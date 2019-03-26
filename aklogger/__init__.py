@@ -55,6 +55,13 @@ _levelToName = {
     NOTSET: 'NOTSET',
 }
 
+_levelToColor = {
+    ERROR: 'danger',
+    WARNING: 'warning',
+    INFO: '#439FE0',
+    DEBUG: '#808080',
+}
+
 
 class AKLogger(object):
 
@@ -106,31 +113,31 @@ class AKLogger(object):
         self.logger.addHandler(handler)
 
     def debug(self, summary, details=None, channel='#error',
-              *args, **kwargs):
-        self._log(DEBUG, self.get_name(), summary, details, channel, *args,
-                  **kwargs)
+              force_push_slack=False, *args, **kwargs):
+        self._log(DEBUG, self.get_name(), summary, details, channel,
+                  force_push_slack, *args, **kwargs)
 
-    def info(self, summary, details=None, channel='#error', *args,
-             **kwargs):
-        self._log(INFO, self.get_name(), summary, details, channel, *args,
-                  **kwargs)
+    def info(self, summary, details=None, channel='#error',
+             force_push_slack=False, *args, **kwargs):
+        self._log(INFO, self.get_name(), summary, details, channel,
+                  force_push_slack, *args, **kwargs)
 
-    def warning(self, summary, details=None, channel='#error', *args,
-                **kwargs):
-        self._log(WARNING, self.get_name(), summary, details, channel, *args,
-                  **kwargs)
+    def warning(self, summary, details=None, channel='#error',
+                force_push_slack=False, *args, **kwargs):
+        self._log(WARNING, self.get_name(), summary, details, channel,
+                  force_push_slack, *args, **kwargs)
 
-    def error(self, summary, details=None, channel='#error', *args,
-              **kwargs):
-        self._log(ERROR, self.get_name(), summary, details, channel, *args,
-                  **kwargs)
+    def error(self, summary, details=None, channel='#error',
+              force_push_slack=False, *args, **kwargs):
+        self._log(ERROR, self.get_name(), summary, details, channel,
+                  force_push_slack, *args, **kwargs)
 
     def _log(self, level, name, summary=None, details=None, channel='#error',
-             *args, **kwargs):
+             force_push_slack=False, *args, **kwargs):
 
         if self.parent:
-            self.parent._log(level, name, summary, details, channel, *args,
-                             **kwargs)
+            self.parent._log(level, name, summary, details, channel,
+                             force_push_slack, *args, **kwargs)
 
         if level < self.getLevel() or self.getLevel() == NOTSET:
             return
@@ -143,14 +150,21 @@ class AKLogger(object):
             )
         method_to_call = getattr(self.logger, _levelToName.get(level).lower())
         method_to_call(msg, *args, **kwargs)
-        self.slack_alert(summary, details, channel, level)
+        if force_push_slack or self.should_push_to_slack(level):
+            self.slack_push(summary, details, channel, level)
 
-    def slack_alert(self, summary, details, channel, level,
-                    color='good'):
+    def get_slack_color(self, level):
+        color = _levelToColor.get(level, _levelToColor[10])
+        return color
+
+    def should_push_to_slack(self, level):
         if not self.slkr:
-            return
+            return False
         if level < self.get_slack_level():
-            return
+            return False
+        return True
+
+    def slack_push(self, summary, details, channel, level):
         try:
             self.slkr.chat.post_message(
                 channel=channel,
@@ -161,7 +175,7 @@ class AKLogger(object):
                     {
                         'fallback': summary,
                         'text': details,
-                        'color': color,
+                        'color': self.get_slack_color(level),
                     }
                 ] if details else None,
             )
