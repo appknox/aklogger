@@ -140,6 +140,26 @@ fn set_log_file(log_file: &PyString) {
         .set_log_file(Some(log_file.to_string().into()));
 }
 
+/*
+#[pyfunction]
+fn quick(data1: Option<PyObject>, data2: Option<PyObject>, data3: Option<PyObject>) {
+    dbg!(data1, data2, data3);
+}
+*/
+#[pyfunction]
+fn tpl(summary: &PyString, details: &PyString) -> String {
+    format!(
+        "
+=====================
+{}
+---------------------
+{}
+=====================
+",
+        summary, details
+    )
+}
+
 #[pymodule]
 fn aklogger(_py: Python, m: &PyModule) -> PyResult<()> {
     log::set_logger(&AK_LOGGER).unwrap();
@@ -154,6 +174,7 @@ fn aklogger(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(set_slack_token, m)?)?;
     m.add_function(wrap_pyfunction!(set_slack_level, m)?)?;
     m.add_function(wrap_pyfunction!(set_log_file, m)?)?;
+    m.add_function(wrap_pyfunction!(tpl, m)?)?;
     Ok(())
 }
 
