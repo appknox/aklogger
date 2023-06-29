@@ -3,7 +3,9 @@ use once_cell::sync::Lazy;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use std::ffi::CString;
-use std::path::PathBuf;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
 use std::sync::Mutex;
 
 fn get_level(level: &PyString) -> Level {
@@ -19,7 +21,7 @@ fn get_level(level: &PyString) -> Level {
 struct State {
     level: Level,
     name: String,
-    log_file: Option<PathBuf>,
+    log_file: Option<String>,
     slack_token: Option<String>,
     slack_level: Level,
 }
@@ -41,8 +43,15 @@ impl State {
         self.slack_level = slack_level;
     }
 
-    fn set_log_file(&mut self, log_file: Option<PathBuf>) {
-        self.log_file = log_file;
+    fn set_log_file(&mut self, log_file: Option<String>) {
+        self.log_file = log_file.clone();
+        if log_file.is_some() {
+            let path = log_file.unwrap().to_string();
+            let path = Path::new(path.as_str());
+            if !path.exists() {
+                File::create(path).unwrap();
+            }
+        }
     }
 }
 
@@ -71,8 +80,16 @@ impl Log for AkLogger {
                 record.level(),
                 record.args()
             );
-            let c_message = CString::new(message).expect("CString::new failed");
-            println!("{}", c_message.to_string_lossy());
+            let message = CString::new(message).expect("CString::new failed");
+            println!("{}", message.to_string_lossy());
+            let log_file = &STATE.lock().unwrap();
+            let log_file = log_file.log_file.as_ref();
+            if log_file.is_some() {
+                let path = log_file.unwrap().to_string();
+                let path = Path::new(path.as_str());
+                let mut file = File::options().write(true).append(true).open(path).unwrap();
+                writeln!(file, "{}", message.to_string_lossy()).unwrap();
+            }
         }
     }
 
@@ -137,7 +154,7 @@ fn set_log_file(log_file: &PyString) {
     STATE
         .lock()
         .unwrap()
-        .set_log_file(Some(log_file.to_string().into()));
+        .set_log_file(Some(log_file.to_string()));
 }
 
 /*
