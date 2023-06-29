@@ -1,13 +1,14 @@
 import os
 from aklogger import aklogger as logger, tpl
-import slacker
+
+# import slacker
 
 logger.set_name("mycroft")
-try:
-    logger.enable_slack("invalid_token")
-except slacker.Error:
-    pass
-logger.setLevel("DEBUG")
+# try:
+logger.enable_slack("invalid_token")
+# except slacker.Error:
+#     pass
+logger.set_level("DEBUG")
 logger.set_slack_level("WARNING")
 logger.log_to_file("file.log")
 

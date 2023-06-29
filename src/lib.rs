@@ -134,7 +134,7 @@ fn set_level(level: &PyString) {
 }
 
 #[pyfunction]
-fn set_slack_token(slack_token: &PyString) {
+fn enable_slack(slack_token: &PyString) {
     STATE
         .lock()
         .unwrap()
@@ -150,7 +150,7 @@ fn set_slack_level(slack_level: &PyString) {
 }
 
 #[pyfunction]
-fn set_log_file(log_file: &PyString) {
+fn log_to_file(log_file: &PyString) {
     STATE
         .lock()
         .unwrap()
@@ -188,9 +188,9 @@ fn aklogger(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(crate::warn, m)?)?;
     m.add_function(wrap_pyfunction!(set_name, m)?)?;
     m.add_function(wrap_pyfunction!(set_level, m)?)?;
-    m.add_function(wrap_pyfunction!(set_slack_token, m)?)?;
+    m.add_function(wrap_pyfunction!(enable_slack, m)?)?;
     m.add_function(wrap_pyfunction!(set_slack_level, m)?)?;
-    m.add_function(wrap_pyfunction!(set_log_file, m)?)?;
+    m.add_function(wrap_pyfunction!(log_to_file, m)?)?;
     m.add_function(wrap_pyfunction!(tpl, m)?)?;
     Ok(())
 }
