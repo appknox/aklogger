@@ -1,7 +1,8 @@
-use log::{debug, error, info, trace, warn, Level, Log, Metadata, Record};
+use log::{debug, error, info, kv::Key, trace, warn, Level, Log, Metadata, Record};
 use once_cell::sync::Lazy;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use std::ffi::CString;
 use std::fs::File;
 use std::io::Write;
@@ -18,6 +19,7 @@ fn get_level(level: &PyString) -> Level {
         _ => Level::Error,
     }
 }
+
 struct State {
     level: Level,
     name: String,
@@ -68,13 +70,18 @@ static STATE: Lazy<Mutex<State>> = Lazy::new(|| {
 
 struct AkLogger;
 
+impl AkLogger {
+    fn is_slack_enabled(&self, level: Level) -> bool {
+        level <= STATE.lock().unwrap().slack_level
+    }
+}
 impl Log for AkLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         metadata.level() <= STATE.lock().unwrap().level
     }
 
     fn log(&self, record: &Record) {
-        dbg!(record);
+        let kv = record.key_values();
         if self.enabled(record.metadata()) {
             let message = format!(
                 "[{}] {} - {}",
@@ -84,13 +91,36 @@ impl Log for AkLogger {
             );
             let message = CString::new(message).expect("CString::new failed");
             println!("{}", message.to_string_lossy());
-            let log_file = &STATE.lock().unwrap();
-            let log_file = log_file.log_file.as_ref();
+            let state = STATE.lock().unwrap();
+            let log_file = state.log_file.as_ref();
             if log_file.is_some() {
                 let path = log_file.unwrap().to_string();
                 let path = Path::new(path.as_str());
                 let mut file = File::options().write(true).append(true).open(path).unwrap();
                 writeln!(file, "{}", message.to_string_lossy()).unwrap();
+            }
+            if state.slack_token.is_some() {
+                let force_push_slack = kv.get(Key::from_str("force_push_slack")).unwrap();
+                let force_push_slack = force_push_slack.to_bool().unwrap();
+                if force_push_slack || self.is_slack_enabled(record.metadata().level()) {
+                    let channel = kv.get(Key::from_str("channel")).unwrap();
+                    let channel = channel.to_borrowed_str().unwrap();
+                    let mut headers = HeaderMap::new();
+                    let token = state.slack_token.clone().unwrap();
+                    let token = format!("Bearer {}", token);
+                    headers.insert(
+                        AUTHORIZATION,
+                        HeaderValue::from_str(token.as_str()).unwrap(),
+                    );
+                    let client = reqwest::blocking::Client::new();
+                    client
+                        .post("https://slack.com/api/chat.postMessage")
+                        .headers(headers)
+                        .query(&[("text", message)])
+                        .query(&[("channel", channel)])
+                        .send()
+                        .unwrap();
+                }
             }
         }
     }
@@ -235,12 +265,6 @@ fn log_to_file(log_file: &PyString) {
         .set_log_file(Some(log_file.to_string()));
 }
 
-/*
-#[pyfunction]
-fn quick(data1: Option<PyObject>, data2: Option<PyObject>, data3: Option<PyObject>) {
-    dbg!(data1, data2, data3);
-}
-*/
 #[pyfunction]
 fn tpl(summary: &PyString, details: &PyString) -> String {
     format!(
@@ -272,13 +296,3 @@ fn aklogger(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(tpl, m)?)?;
     Ok(())
 }
-
-/*
-#[neon::main]
-fn init_rust_logging_lib_neon(
-    mut cx: neon::prelude::Context,
-) -> neon::result::JsResult<neon::types::JsUndefined> {
-    init_logging();
-    Ok(cx.undefined())
-}
-*/
