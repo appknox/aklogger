@@ -32,6 +32,7 @@ impl State {
     }
 
     fn set_level(&mut self, level: Level) {
+        log::set_max_level(level.to_level_filter());
         self.level = level;
     }
 
@@ -73,6 +74,7 @@ impl Log for AkLogger {
     }
 
     fn log(&self, record: &Record) {
+        dbg!(record);
         if self.enabled(record.metadata()) {
             let message = format!(
                 "[{}] {} - {}",
@@ -98,29 +100,105 @@ impl Log for AkLogger {
 
 static AK_LOGGER: AkLogger = AkLogger;
 
-#[pyfunction]
-fn info(msg: &PyString) {
-    info!("{}", msg);
+fn get_message(summary: &PyString, details: Option<&PyString>) -> String {
+    if details.is_some() {
+        tpl(summary, details.unwrap())
+    } else {
+        summary.to_string()
+    }
+}
+
+trait GetChannel {
+    fn get_channel(&self) -> &str;
+}
+
+impl GetChannel for Option<&PyString> {
+    fn get_channel(&self) -> &str {
+        match self {
+            Some(t) => t.to_str().unwrap_or("#error"),
+            None => "#error",
+        }
+    }
+}
+
+trait GetBool {
+    fn get_bool(&self) -> bool;
+}
+
+impl GetBool for Option<bool> {
+    fn get_bool(&self) -> bool {
+        self.unwrap_or(false)
+    }
 }
 
 #[pyfunction]
-fn warn(msg: &PyString) {
-    warn!("{}", msg);
+fn info(
+    summary: &PyString,
+    details: Option<&PyString>,
+    channel: Option<&PyString>,
+    force_push_slack: Option<bool>,
+) {
+    info!(
+        channel = channel.get_channel(),
+        force_push_slack=force_push_slack.get_bool();
+        "{}", get_message(summary, details)
+    );
 }
 
 #[pyfunction]
-fn trace(msg: &PyString) {
-    trace!("{}", msg);
+fn warn(
+    summary: &PyString,
+    details: Option<&PyString>,
+    channel: Option<&PyString>,
+    force_push_slack: Option<bool>,
+) {
+    warn!(
+        channel = channel.get_channel(),
+        force_push_slack=force_push_slack.get_bool();
+        "{}", get_message(summary, details)
+    );
 }
 
 #[pyfunction]
-fn error(msg: &PyString) {
-    error!("{}", msg);
+fn trace(
+    summary: &PyString,
+    details: Option<&PyString>,
+    channel: Option<&PyString>,
+    force_push_slack: Option<bool>,
+) {
+    trace!(
+        channel = channel.get_channel(),
+        force_push_slack=force_push_slack.get_bool();
+        "{}", get_message(summary, details)
+    );
 }
 
 #[pyfunction]
-fn debug(msg: &PyString) {
-    debug!("{}", msg);
+fn error(
+    summary: &PyString,
+    details: Option<&PyString>,
+    channel: Option<&PyString>,
+    force_push_slack: Option<bool>,
+) {
+    error!(
+        channel = channel.get_channel(),
+        force_push_slack=force_push_slack.get_bool();
+        "{}", get_message(summary, details)
+    );
+}
+
+#[pyfunction]
+fn debug(
+    summary: &PyString,
+    details: Option<&PyString>,
+    channel: Option<&PyString>,
+    force_push_slack: Option<bool>,
+) {
+    debug!(
+        channel = channel.get_channel(),
+        force_push_slack=force_push_slack.get_bool();
+        "{}", get_message(summary, details)
+    );
 }
 
 #[pyfunction]
