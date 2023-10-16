@@ -1,6 +1,8 @@
 import logging
 
-from slacker import Slacker
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+
 
 tpl = """
 =====================
@@ -69,10 +71,12 @@ class AKLogger(object):
         self.set_name(name)
         self.parent = parent
         self.logger = get_logger(self.get_name())
-        self.slkr = None
+
+        self.slack_client = None
         self.slack_token = None
         self.slack_level = None
         self.slack_channel = None
+
         self.setLevel(NOTSET)
 
     def set_name(self, name):
@@ -94,13 +98,15 @@ class AKLogger(object):
         return self.level
 
     def enable_slack(self, token, channel):
-        self.slkr = Slacker(token)
-        self.slkr.api.test()
+        self.slack_client = WebClient(token=token)
+        api_response = self.slack_client.api_test()
+        self.logger.debug(f"aklogger: Slack API test ok: {api_response['ok']}")
+
         self.slack_token = token
         self.slack_channel = channel
 
     def disable_slack(self):
-        self.slkr = None
+        self.slack_client = None
         self.slack_token = None
         self.slack_channel = None
 
@@ -164,7 +170,7 @@ class AKLogger(object):
         return color
 
     def should_push_to_slack(self, level):
-        if not self.slkr:
+        if self.slack_client is None:
             return False
         if level < self.get_slack_level():
             return False
@@ -172,9 +178,10 @@ class AKLogger(object):
 
     def slack_push(self, summary, details, channel, level):
         if not channel:
-            channel = self.slack_channel  # use default channel
+            channel = self.slack_channel
+
         try:
-            self.slkr.chat.post_message(
+            response = self.slack_client.chat_postMessage(
                 channel=channel,
                 text=summary,
                 username=self.name,
@@ -187,8 +194,13 @@ class AKLogger(object):
                     }
                 ] if details else None,
             )
-        except Exception as e:
-            self.logger.error('Slack failed: {}'.format(e))
+            assert response["message"]["text"] == summary
+        except SlackApiError as e:
+            assert e.response["ok"] is False
+            assert e.response["error"]
+            self.logger.error(
+                f"aklogger: Slack push failed: {e.response['error']}"
+            )
 
 
 logger = AKLogger('root')
