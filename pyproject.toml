@@ -17,7 +17,6 @@ slacker = "^0.14.0"
 [tool.poetry.dev-dependencies]
 pytest-cov = "^2.8.1"
 coverage = "^5.1"
-codecov = "^2.0.22"
 flake8 = "^3.7.9"
 
 [build-system]
