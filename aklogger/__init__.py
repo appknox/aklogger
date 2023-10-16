@@ -12,12 +12,13 @@ tpl = """
 =====================
 """
 
-root_logger = logging.getLogger('root')
+root_logger = logging.getLogger("root")
 root_stream_handler = logging.StreamHandler()
 
 try:
     from celery.utils.log import get_task_logger
-    root_logger = get_task_logger('root')
+
+    root_logger = get_task_logger("root")
 except ImportError:
     pass
 
@@ -33,6 +34,7 @@ try:
     @after_setup_task_logger.connect
     def after_setup_task_aklogger(logger, *args, **kwargs):
         root_logger.removeHandler(root_stream_handler)
+
 except ImportError:
     pass
 
@@ -49,24 +51,23 @@ DEBUG = logging.DEBUG
 NOTSET = logging.NOTSET
 
 _levelToName = {
-    CRITICAL: 'CRITICAL',
-    ERROR: 'ERROR',
-    WARNING: 'WARNING',
-    INFO: 'INFO',
-    DEBUG: 'DEBUG',
-    NOTSET: 'NOTSET',
+    CRITICAL: "CRITICAL",
+    ERROR: "ERROR",
+    WARNING: "WARNING",
+    INFO: "INFO",
+    DEBUG: "DEBUG",
+    NOTSET: "NOTSET",
 }
 
 _levelToColor = {
-    ERROR: 'danger',
-    WARNING: 'warning',
-    INFO: '#439FE0',
-    DEBUG: '#808080',
+    ERROR: "danger",
+    WARNING: "warning",
+    INFO: "#439FE0",
+    DEBUG: "#808080",
 }
 
 
 class AKLogger(object):
-
     def __init__(self, name, parent=None):
         self.set_name(name)
         self.parent = parent
@@ -84,7 +85,7 @@ class AKLogger(object):
 
     def get_name(self):
         if self.parent is not None:
-            return self.parent.get_name() + ':' + self.name
+            return self.parent.get_name() + ":" + self.name
         return self.name
 
     def getLogger(self, name):
@@ -124,42 +125,115 @@ class AKLogger(object):
         handler = logging.FileHandler(self.filename)
         self.logger.addHandler(handler)
 
-    def debug(self, summary, details=None, channel=None,
-              force_push_slack=False, *args, **kwargs):
-        self._log(DEBUG, self.get_name(), summary, details, channel,
-                  force_push_slack, *args, **kwargs)
+    def debug(
+        self,
+        summary,
+        details=None,
+        channel=None,
+        force_push_slack=False,
+        *args,
+        **kwargs,
+    ):
+        self._log(
+            DEBUG,
+            self.get_name(),
+            summary,
+            details,
+            channel,
+            force_push_slack,
+            *args,
+            **kwargs,
+        )
 
-    def info(self, summary, details=None, channel=None,
-             force_push_slack=False, *args, **kwargs):
-        self._log(INFO, self.get_name(), summary, details, channel,
-                  force_push_slack, *args, **kwargs)
+    def info(
+        self,
+        summary,
+        details=None,
+        channel=None,
+        force_push_slack=False,
+        *args,
+        **kwargs,
+    ):
+        self._log(
+            INFO,
+            self.get_name(),
+            summary,
+            details,
+            channel,
+            force_push_slack,
+            *args,
+            **kwargs,
+        )
 
-    def warning(self, summary, details=None, channel=None,
-                force_push_slack=False, *args, **kwargs):
-        self._log(WARNING, self.get_name(), summary, details, channel,
-                  force_push_slack, *args, **kwargs)
+    def warning(
+        self,
+        summary,
+        details=None,
+        channel=None,
+        force_push_slack=False,
+        *args,
+        **kwargs,
+    ):
+        self._log(
+            WARNING,
+            self.get_name(),
+            summary,
+            details,
+            channel,
+            force_push_slack,
+            *args,
+            **kwargs,
+        )
 
-    def error(self, summary, details=None, channel=None,
-              force_push_slack=False, *args, **kwargs):
-        self._log(ERROR, self.get_name(), summary, details, channel,
-                  force_push_slack, *args, **kwargs)
+    def error(
+        self,
+        summary,
+        details=None,
+        channel=None,
+        force_push_slack=False,
+        *args,
+        **kwargs,
+    ):
+        self._log(
+            ERROR,
+            self.get_name(),
+            summary,
+            details,
+            channel,
+            force_push_slack,
+            *args,
+            **kwargs,
+        )
 
-    def _log(self, level, name, summary=None, details=None, channel=None,
-             force_push_slack=False, *args, **kwargs):
-
+    def _log(
+        self,
+        level,
+        name,
+        summary=None,
+        details=None,
+        channel=None,
+        force_push_slack=False,
+        *args,
+        **kwargs,
+    ):
         if self.parent:
-            self.parent._log(level, name, summary, details, channel,
-                             force_push_slack, *args, **kwargs)
+            self.parent._log(
+                level,
+                name,
+                summary,
+                details,
+                channel,
+                force_push_slack,
+                *args,
+                **kwargs,
+            )
 
         if level < self.getLevel() or self.getLevel() == NOTSET:
             return
 
         msg = summary
         if details:
-            msg = tpl.format(
-                summary=summary,
-                details=details
-            )
+            msg = tpl.format(summary=summary, details=details)
         method_to_call = getattr(self.logger, _levelToName.get(level).lower())
         method_to_call(msg, *args, **kwargs)
         if force_push_slack or self.should_push_to_slack(level):
@@ -188,22 +262,23 @@ class AKLogger(object):
                 icon_emoji=self.slack_icon_emoji,
                 attachments=[
                     {
-                        'fallback': summary,
-                        'text': details,
-                        'color': self.get_slack_color(level),
+                        "fallback": summary,
+                        "text": details,
+                        "color": self.get_slack_color(level),
                     }
-                ] if details else None,
+                ]
+                if details
+                else None,
             )
             assert response["message"]["text"] == summary
         except SlackApiError as e:
             assert e.response["ok"] is False
-            assert e.response["error"]
-            self.logger.error(
-                f"aklogger: Slack push failed: {e.response['error']}"
-            )
+            error_response = e.response["error"]
+            assert error_response
+            self.logger.error(f"aklogger: Slack push failed: {error_response}")
 
 
-logger = AKLogger('root')
+logger = AKLogger("root")
 
 
 def getLogger(name=None):
