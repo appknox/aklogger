@@ -72,6 +72,7 @@ class AKLogger(object):
         self.slkr = None
         self.slack_token = None
         self.slack_level = None
+        self.slack_channel = None
         self.setLevel(NOTSET)
 
     def set_name(self, name):
@@ -92,14 +93,16 @@ class AKLogger(object):
     def getLevel(self):
         return self.level
 
-    def enable_slack(self, token):
+    def enable_slack(self, token, channel):
         self.slkr = Slacker(token)
         self.slkr.api.test()
         self.slack_token = token
+        self.slack_channel = channel
 
     def disable_slack(self):
         self.slkr = None
         self.slack_token = None
+        self.slack_channel = None
 
     def get_slack_level(self):
         return self.slack_level or self.level
@@ -107,32 +110,35 @@ class AKLogger(object):
     def set_slack_level(self, level):
         self.slack_level = logging._checkLevel(level)
 
+    def set_slack_preferences(self, icon_emoji):
+        self.slack_icon_emoji = icon_emoji
+
     def log_to_file(self, file_name):
         self.filename = file_name
         handler = logging.FileHandler(self.filename)
         self.logger.addHandler(handler)
 
-    def debug(self, summary, details=None, channel='#error',
+    def debug(self, summary, details=None, channel=None,
               force_push_slack=False, *args, **kwargs):
         self._log(DEBUG, self.get_name(), summary, details, channel,
                   force_push_slack, *args, **kwargs)
 
-    def info(self, summary, details=None, channel='#error',
+    def info(self, summary, details=None, channel=None,
              force_push_slack=False, *args, **kwargs):
         self._log(INFO, self.get_name(), summary, details, channel,
                   force_push_slack, *args, **kwargs)
 
-    def warning(self, summary, details=None, channel='#error',
+    def warning(self, summary, details=None, channel=None,
                 force_push_slack=False, *args, **kwargs):
         self._log(WARNING, self.get_name(), summary, details, channel,
                   force_push_slack, *args, **kwargs)
 
-    def error(self, summary, details=None, channel='#error',
+    def error(self, summary, details=None, channel=None,
               force_push_slack=False, *args, **kwargs):
         self._log(ERROR, self.get_name(), summary, details, channel,
                   force_push_slack, *args, **kwargs)
 
-    def _log(self, level, name, summary=None, details=None, channel='#error',
+    def _log(self, level, name, summary=None, details=None, channel=None,
              force_push_slack=False, *args, **kwargs):
 
         if self.parent:
@@ -165,12 +171,14 @@ class AKLogger(object):
         return True
 
     def slack_push(self, summary, details, channel, level):
+        if not channel:
+            channel = self.slack_channel  # use default channel
         try:
             self.slkr.chat.post_message(
                 channel=channel,
                 text=summary,
                 username=self.name,
-                icon_emoji=':squirrel:',
+                icon_emoji=self.slack_icon_emoji,
                 attachments=[
                     {
                         'fallback': summary,
