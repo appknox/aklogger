@@ -46,6 +46,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+.ruff_cache/
 
 # Translations
 *.mo
@@ -105,3 +106,6 @@ venv.bak/
 
 # editor
 .vscode/
+
+# OS
+.DS_Store
