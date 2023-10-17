@@ -12,13 +12,13 @@ tpl = """
 =====================
 """
 
-root_logger = logging.getLogger("root")
+root_logger = logging.getLogger("akroot")
 root_stream_handler = logging.StreamHandler()
 
 try:
     from celery.utils.log import get_task_logger
 
-    root_logger = get_task_logger("root")
+    root_logger = get_task_logger("akroot")
 except ImportError:
     pass
 
