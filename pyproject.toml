@@ -4,20 +4,25 @@ version = "0.1.2"
 description = "A generic logging package for python projects"
 authors = ["Appknox <engineering@appknox.com>"]
 license = "MIT"
-
 keywords = ['appknox', 'logging', 'aklogger']
 repository = "https://github.com/appknox/aklogger"
 homepage = "https://github.com/appknox/aklogger"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.6"
-slacker = "^0.14.0"
+python = "^3.8"
+slack-sdk = "^3.23.0"
 
-[tool.poetry.dev-dependencies]
-pytest-cov = "^2.8.1"
-coverage = "^5.1"
-flake8 = "^3.7.9"
+[tool.poetry.group.dev.dependencies]
+coverage = "^7.3.2"
+pytest = "^7.4.2"
+pytest-cov = "^4.1.0"
+ruff = "^0.1.0"
+black = "^23.9.1"
+
+[tool.black]
+line-length = 79
+target-version = ['py38']
 
 [build-system]
 requires = ["poetry-core"]
