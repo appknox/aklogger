@@ -1,0 +1,66 @@
+name: CI
+on: push
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Setup poetry
+        uses: Gr1N/setup-poetry@v8
+      - name: Install
+        run: |
+          poetry --version
+          poetry install
+      - name: Linting
+        run: poetry run ruff check .
+      - name: Test
+        run: poetry run pytest --cov=./ --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./
+          fail_ci_if_error: true
+          verbose: true
+      - name: Get branch workflow last run status
+        uses: actions/github-script@v3
+        id: last_branch_workflow_status
+        with:
+          script: |
+            const ref = '${{ github.ref }}';
+            const branchName = ref.split("/").slice(-1)[0];
+            const currentrun = await github.actions.getWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: '${{ github.run_id }}'
+            })
+            const runs = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event: 'push',
+              branch: branchName,
+              status: 'completed',
+              workflow_id: currentrun.data.workflow_id,
+              per_page: 1
+            });
+            return (runs.data.workflow_runs.length > 0) ? runs.data.workflow_runs[0].conclusion : '';
+          result-encoding: string
+      - name: Slack notification
+        if: failure() || (success() && (steps.last_branch_workflow_status.outputs.result == 'failure' || steps.last_branch_workflow_status.outputs.result == ''))
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: repo,message,commit,author,eventName,ref,workflow,took
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+                text: `${{ job.status }}: ${process.env.AS_AUTHOR.split("<")[0]}'s workflow (${process.env.AS_WORKFLOW}) in ${process.env.AS_REPO} (${process.env.AS_REF})\n- ${process.env.AS_MESSAGE} (${process.env.AS_COMMIT}) - ${process.env.AS_TOOK}`,
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
