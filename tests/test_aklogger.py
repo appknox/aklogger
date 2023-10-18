@@ -13,7 +13,11 @@ class TestAkLogger:
     logger.set_slack_level("WARNING")
     logger.log_to_file("file.log")
 
-    slack_invalid_auth_error = "aklogger: Slack push failed: invalid_auth"
+    slack_invalid_auth_error = (
+        "aklogger: Slack push failed: The request to the Slack API failed. "
+        "(url: https://www.slack.com/api/chat.postMessage)\n"
+        "The server responded with: {'ok': False, 'error': 'invalid_auth'}"
+    )
 
     def test_debug_should_write_if_loglevel_is_debug(self):
         summary = "This is a debug message"
