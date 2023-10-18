@@ -1,7 +1,6 @@
 import logging
 
 from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
 
 
 tpl = """
@@ -258,7 +257,7 @@ class AKLogger(object):
             channel = self.slack_channel
 
         try:
-            response = self.slack_client.chat_postMessage(
+            self.slack_client.chat_postMessage(
                 channel=channel,
                 text=summary,
                 username=self.name,
@@ -273,12 +272,8 @@ class AKLogger(object):
                 if details
                 else None,
             )
-            assert response["message"]["text"] == summary
-        except SlackApiError as e:
-            assert e.response["ok"] is False
-            error_response = e.response["error"]
-            assert error_response
-            self.logger.error(f"aklogger: Slack push failed: {error_response}")
+        except Exception as e:
+            self.logger.error(f"aklogger: Slack push failed: {str(e)}")
 
 
 logger = AKLogger("root")
